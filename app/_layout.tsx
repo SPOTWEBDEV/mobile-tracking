@@ -1,24 +1,41 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import { useFonts } from "expo-font";
+import { Slot, Stack } from "expo-router";
+import { View } from "react-native";
+import Toast from "react-native-toast-message";
+import { toastConfig } from "../components/toastConfig";
+import "../global.css";
+import { ThemeProvider } from '../hooks/ThemeContext';
+import { AuthProvider } from "./context/AuthContext";
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+export default function Layout() {
+  const [loaded] = useFonts({
+    PoppinsLight: require("../assets/fonts/Poppins-Light.ttf"),
+    PoppinsMedium: require("../assets/fonts/Poppins-Medium.ttf"),
+    PoppinsSemiBold: require("../assets/fonts/Poppins-SemiBold.ttf"),
+    PoppinsBold: require("../assets/fonts/Poppins-Bold.ttf"),
+  });
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
-
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  if (!loaded) return <View />;
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <>
+
+      <ThemeProvider>
+        <AuthProvider>
+
+          <Stack screenOptions={{ headerShown: false }}>
+            <Slot />
+          </Stack>
+
+          <Toast
+            config={toastConfig}
+            position="top"
+            topOffset={60}
+          />
+
+        </AuthProvider>
+      </ThemeProvider>
+
+    </>
   );
 }

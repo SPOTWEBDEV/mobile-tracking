@@ -1,48 +1,78 @@
 {
   "expo": {
-    "name": "monitorspirit",
-    "slug": "monitorspirit",
+    "name": "Monitor Spirit",
+    "slug": "monitor-spirit",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "monitorspirit",
+    "icon": "./assets/images/logo.png",
+    "scheme": "monitor-spirit",
     "userInterfaceStyle": "automatic",
+    "updates": {
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/82ca5b94-aebb-4c47-b58f-9b076aed6056"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "build": {
+      "production": {
+        "releaseChannel": "production",
+        "android": {
+          "buildType": "app-bundle"
+        }
+      },
+      "apk": {
+        "releaseChannel": "apk",
+        "android": {
+          "buildType": "apk"
+        }
+      }
+    },
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#FFFFFF"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.anonymous.MonitorSpirit"
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/logo.png",
+      "bundler": "metro"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/logo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
           "dark": {
-            "backgroundColor": "#000000"
+            "backgroundColor": "#fff"
           }
         }
-      ]
+      ],
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "82ca5b94-aebb-4c47-b58f-9b076aed6056"
+      }
     }
   }
 }
