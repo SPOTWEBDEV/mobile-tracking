@@ -11,8 +11,10 @@ import {
   View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
+import { getDeviceInfo } from "../../components/deviceInfo";
 
-const API_BASE = "https://asfast-app.com/api/api";
+const API_BASE = "https://spotwebtech.com.ng/monitor-spirit/api";
 
 export default function RegisterScreen() {
   const { plan } = useLocalSearchParams();
@@ -22,75 +24,88 @@ export default function RegisterScreen() {
   const router = useRouter()
   const [username, setUserName] = useState("");
   const [email, setEmail] = useState("");
-  const [referral, setReferral] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
 
   const handleRegister = async () => {
-    if (!username || !email || !password || !confirmPassword) {
-      alert("All required fields must be filled");
-      return;
-    }
+  if (!username || !email || !password || !confirmPassword) {
+    Toast.show({
+      type: "error",
+      text1: "Missing Fields",
+      text2: "All required fields must be filled",
+    });
+    return;
+  }
 
-    if (password !== confirmPassword) {
-      alert("Passwords do not match");
-      return;
-    }
+  if (password !== confirmPassword) {
+    Toast.show({
+      type: "error",
+      text1: "Password Error",
+      text2: "Passwords do not match",
+    });
+    return;
+  }
 
-    const nameParts = username.trim().split(" ");
-    if (nameParts.length < 2) {
-      alert("Please enter your full name");
-      return;
-    }
+  setLoading(true);
 
-    const first_name = nameParts[0];
-    const last_name = nameParts.slice(1).join(" ");
+  try {
+    const { device_id, device_name } = await getDeviceInfo();
+    
+    const res = await fetch(`${API_BASE}/register.php`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        username,
+        email,
+        password,
+        device_id,
+        device_name
+      }),
+    });
 
-    setLoading(true);
+    const text = await res.text();
+    console.log("REGISTER RESPONSE:", text);
 
-    try {
-      const res = await fetch(`${API_BASE}/auth/register.php`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          first_name,
-          last_name,
-          email,
-          password,
-          referral_code: referral,
-        }),
+    const data = JSON.parse(text);
+
+    if (!data.status) {
+      Toast.show({
+        type: "error",
+        text1: "Registration Failed",
+        text2: data.message || "Something went wrong",
       });
-
-      const text = await res.text();
-      console.log("REGISTER RESPONSE:", text);
-
-      const data = JSON.parse(text);
-
-      if (!data.status) {
-        alert(data.message || "Registration failed");
-        return;
-      }
-
-      // ✅ SUCCESS → Go to OTP screen
-      router.push({
-        pathname: "/auth/verify-email",
-        params: {
-          email: email,
-        },
-      });
-
-    } catch (error) {
-      console.log(error);
-      alert("Network error. Please try again");
-    } finally {
-      setLoading(false);
+      return;
     }
-  };
+
+    Toast.show({
+      type: "success",
+      text1: "Success 🎉",
+      text2: "Account created successfully",
+    });
+
+    // optional redirect
+    setTimeout(() => {
+      router.replace("/auth/login");
+    }, 1500);
+
+  } catch (error) {
+    console.log(error);
+
+    Toast.show({
+      type: "error",
+      text1: "Network Error",
+      text2: "Please try again",
+    });
+
+  } finally {
+    setLoading(false);
+  }
+};
 
 
   return (
@@ -120,7 +135,7 @@ export default function RegisterScreen() {
               Create account
             </Text>
             <Text className="text-gray-500 mt-1">
-              Create your Monitor Spirt account to get started in minutes!
+              Create your  <Text className="text-blue-500 uppercase font-poppinsBold"> Monitor Spirt {plan}</Text> account to get started in minutes!
             </Text>
           </View>
 

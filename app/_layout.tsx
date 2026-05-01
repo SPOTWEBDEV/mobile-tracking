@@ -5,7 +5,7 @@ import Toast from "react-native-toast-message";
 import { toastConfig } from "../components/toastConfig";
 import "../global.css";
 import { ThemeProvider } from '../hooks/ThemeContext';
-import { AuthProvider } from "./context/AuthContext";
+
 
 export default function Layout() {
   const [loaded] = useFonts({
@@ -21,8 +21,6 @@ export default function Layout() {
     <>
 
       <ThemeProvider>
-        <AuthProvider>
-
           <Stack screenOptions={{ headerShown: false }}>
             <Slot />
           </Stack>
@@ -32,8 +30,6 @@ export default function Layout() {
             position="top"
             topOffset={60}
           />
-
-        </AuthProvider>
       </ThemeProvider>
 
     </>

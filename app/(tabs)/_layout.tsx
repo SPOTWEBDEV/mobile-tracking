@@ -6,14 +6,9 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#0A145A",
+        tabBarActiveTintColor: "#1A4DBE",
         tabBarInactiveTintColor: "#9CA3AF",
-        tabBarStyle: {
-          // marginBottom: 20,
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-        },
+        tabBarLabelStyle: { fontSize: 12 },
       }}
     >
       <Tabs.Screen
@@ -25,46 +20,37 @@ export default function TabsLayout() {
           ),
         }}
       />
+
       <Tabs.Screen
-        name="services"
+        name="devices"
         options={{
-          title: "Services",
+          title: "Devices",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="grid-outline" size={size} color={color} />
+            <Ionicons name="phone-portrait-outline" size={size} color={color} />
           ),
         }}
       />
+
       <Tabs.Screen
-        name="giftcard"
+        name="map"
         options={{
-          title: "Gift Card",
+          title: "Map",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="gift-outline" size={size} color={color} />
+            <Ionicons name="map-outline" size={size} color={color} />
           ),
         }}
       />
-      
+
       <Tabs.Screen
-        name="wallets"
+        name="activity"
         options={{
-          title: "Wallet",
+          title: "Activity",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="wallet-outline" size={size} color={color} />
+            <Ionicons name="time-outline" size={size} color={color} />
           ),
         }}
       />
-      
-      <Tabs.Screen
-        name="refferal"
-        options={{
-          title: "Referral",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="megaphone-outline" size={size} color={color} />
-            
-          ),
-        }}
-      />
-      
+
       <Tabs.Screen
         name="account"
         options={{
