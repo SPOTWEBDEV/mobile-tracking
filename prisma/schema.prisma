@@ -135,6 +135,7 @@ model TrackingGrant {
   @@index([targetId])
 }
 
+
 /// A named geofence (e.g. "Home"). Visible to every active circle member;
 /// not tied to watching one person in particular.
 model Place {
