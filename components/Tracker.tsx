@@ -5,9 +5,9 @@ import type * as Leaflet from "leaflet";
 import { Play, Pause, RotateCcw, Download, Copy, Crosshair, AlertTriangle } from "lucide-react";
 
 type LatLng = [number, number];
-type Log = { time: string; lat: number; lng: number; speed: number | null; accuracy: number };
+type Log = { time: string; lat: number; lng: number; speed: number | null; accuracy: number; street: string };
 type LayerKey = "dark" | "street";
-type Place = { line: string; state: string; country: string };
+type Place = { line: string; street: string; state: string; country: string };
 type Status = { text: string; tone: "amber" | "emerald" | "red" };
 
 // Free, keyless OpenStreetMap tiles (dark mode = same tiles darkened with CSS)
@@ -38,6 +38,7 @@ export default function Tracker() {
   const circle = useRef<Leaflet.Circle | null>(null);
   const line = useRef<Leaflet.Polyline | null>(null);
   const tiles = useRef<Leaflet.TileLayer | null>(null);
+  const streetRef = useRef("Locating street...");
   const geoRef = useRef<{ lat: number; lng: number; t: number } | null>(null);
   const watchId = useRef<number | null>(null);
   const positions = useRef<LatLng[]>([]);
@@ -65,7 +66,7 @@ export default function Tracker() {
   // Reverse geocode (free OpenStreetMap Nominatim): throttled to protect its 1 request/second limit
   const geocode = useCallback(async (lat: number, lng: number) => {
     const last = geoRef.current, now = Date.now();
-    if (last && (now - last.t < 10000 || haversine([last.lat, last.lng], [lat, lng]) < 50)) return;
+    if (last && (now - last.t < 10000 || haversine([last.lat, last.lng], [lat, lng]) < 30)) return;
     geoRef.current = { lat, lng, t: now };
     try {
       const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&zoom=18&accept-language=en&lat=${lat}&lon=${lng}`);
@@ -74,7 +75,10 @@ export default function Tracker() {
       const street = [a.house_number, a.road].filter(Boolean).join(" ");
       const area = a.neighbourhood || a.suburb || a.quarter || a.hamlet || a.village;
       const city = a.city || a.town || a.municipality || a.county;
+      const roadName = a.road || a.pedestrian || a.footway || a.path || area || "Unnamed road";
+      streetRef.current = roadName;
       setPlace({
+        street: roadName,
         line: [a.building || street, area, city].filter(Boolean).join(", ") || display_name,
         state: a.state || a.region || "--",
         country: a.country || "--",
@@ -108,7 +112,7 @@ export default function Tracker() {
       if (prev) setDistance((d) => d + haversine(prev, here));
       positions.current.push(here);
       line.current?.setLatLngs(positions.current);
-      setLogs((l) => [{ time: new Date(pos.timestamp).toLocaleTimeString(), lat, lng, speed, accuracy }, ...l]);
+      setLogs((l) => [{ time: new Date(pos.timestamp).toLocaleTimeString(), lat, lng, speed, accuracy, street: streetRef.current }, ...l]);
       if (followRef.current) m.panTo(here, { animate: true });
     }
     if (!fixed.current) {
@@ -221,7 +225,7 @@ export default function Tracker() {
       features: [{
         type: "Feature",
         geometry: { type: "LineString", coordinates: positions.current.map(([la, ln]) => [ln, la]) },
-        properties: { distanceMeters: distance, pointCount: positions.current.length, exportTimestamp: new Date().toISOString() },
+        properties: { distanceMeters: distance, pointCount: positions.current.length, streets: Array.from(new Set(logs.slice().reverse().map((l) => l.street))), exportTimestamp: new Date().toISOString() },
       }],
     };
     const url = URL.createObjectURL(new Blob([JSON.stringify(geojson, null, 2)], { type: "application/geo+json" }));
@@ -258,6 +262,19 @@ export default function Tracker() {
             <span className="h-2.5 w-2.5 animate-ping rounded-full bg-current" />
             <span>{status.text}</span>
           </div>
+        </div>
+
+        <div className="glass-card mb-8 rounded-3xl p-6">
+          <h3 className="text-xl font-extrabold text-white">Track Yourself</h3>
+          <p className="mt-1 text-sm text-slate-400">See where you are right now, and record your path as you walk, run or drive. Everything stays on your device.</p>
+          <ol className="mt-4 grid gap-3 sm:grid-cols-3">
+            {[["1", "Allow location", "Tap Allow when your browser asks. The blue dot on the map is you."], ["2", "Press Start Live Tracking", "This starts recording your path, distance and speed."], ["3", "Move around", "Your route is drawn, and every street you pass is listed in the history below."]].map(([n, t, d]) => (
+              <li key={n} className="flex items-start gap-3 rounded-2xl border border-slate-800/80 bg-slate-950/60 p-3.5">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-extrabold text-white">{n}</span>
+                <div><p className="text-sm font-bold text-slate-100">{t}</p><p className="text-xs text-slate-400">{d}</p></div>
+              </li>
+            ))}
+          </ol>
         </div>
 
         <div className="grid items-start gap-6 lg:grid-cols-12">
@@ -355,19 +372,24 @@ export default function Tracker() {
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-300">Motion History Breadcrumbs</span>
                 <span className="rounded-md border border-slate-800 bg-slate-900 px-2 py-0.5 font-mono text-[10px] text-slate-500">{logs.length} records</span>
               </div>
-              <div className="max-h-36 overflow-y-auto rounded-xl border border-slate-800/80 bg-slate-950/60 p-2">
+              <p className="mb-3 px-1 text-[11px] text-slate-500">Everywhere you have been, with the street you were on at each point.</p>
+              <div className="max-h-36 overflow-auto rounded-xl border border-slate-800/80 bg-slate-950/60 p-2">
                 <table className="w-full text-left font-mono text-[11px] text-slate-400">
                   <thead>
                     <tr className="border-b border-slate-800 text-[9px] font-extrabold uppercase text-slate-500">
-                      <th className="pb-2 pl-2">Time</th><th className="pb-2">Latitude</th><th className="pb-2">Longitude</th><th className="pb-2">Speed</th><th className="pb-2 pr-2 text-right">Accuracy</th>
+                      <th className="pb-2 pl-2">Time</th><th className="pb-2">Street</th><th className="pb-2">Latitude</th><th className="pb-2">Longitude</th><th className="pb-2">Speed</th><th className="pb-2 pr-2 text-right">Accuracy</th>
                     </tr>
                   </thead>
                   <tbody>
                     {logs.length === 0 ? (
-                      <tr><td colSpan={5} className="py-4 text-center font-sans italic text-slate-600">No movement points logged yet. Start tracking to record route history.</td></tr>
+                      <tr><td colSpan={6} className="py-4 text-center font-sans italic text-slate-600">No movement points logged yet. Start tracking to record route history.</td></tr>
                     ) : logs.map((r, i) => (
                       <tr key={i} className="border-b border-slate-800/60 transition hover:bg-slate-900/50">
                         <td className="py-1.5 pl-2 text-slate-300">{r.time}</td>
+                        <td className="whitespace-nowrap py-1.5 pr-3 font-sans text-slate-200">
+                          {r.street}
+                          {logs[i + 1] && logs[i + 1].street !== r.street && <span className="ml-1.5 rounded bg-blue-500/20 px-1 text-[9px] font-bold text-blue-300">NEW STREET</span>}
+                        </td>
                         <td className="py-1.5 text-blue-400">{r.lat.toFixed(5)}</td>
                         <td className="py-1.5 text-blue-400">{r.lng.toFixed(5)}</td>
                         <td className="py-1.5 text-amber-400">{r.speed && r.speed > 0 ? `${(r.speed * 3.6).toFixed(1)} km/h` : "0.0"}</td>
