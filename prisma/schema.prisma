@@ -1,0 +1,167 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum MembershipStatus {
+  invited
+  active
+  declined
+  left
+}
+
+enum GrantStatus {
+  active
+  revoked
+}
+
+enum ActivityAction {
+  register
+  login
+  create_circle
+  create_tracking_link
+  delete_tracking
+}
+
+model User {
+  id             String   @id @default(cuid())
+  name           String
+  email          String   @unique
+  password       String
+  sharingEnabled Boolean  @default(true)
+  /// False only for accounts auto-created through a tracking link, where the
+  /// person never typed a name or password. Settings shows a one-time
+  /// prompt to set both until this flips to true.
+  profileComplete Boolean @default(true)
+  createdAt      DateTime @default(now())
+
+  ownedCircles       Circle[]        @relation("CircleOwner")
+  memberships        CircleMember[]
+  locationPings      LocationPing[]
+  ownedTrackingLinks TrackingLink[]  @relation("TrackingLinkOwner")
+  watchingGrants     TrackingGrant[] @relation("TrackingGrantWatcher")
+  targetOfGrants     TrackingGrant[] @relation("TrackingGrantTarget")
+  activityLogs       ActivityLog[]
+}
+
+model Circle {
+  id        String   @id @default(cuid())
+  name      String
+  ownerId   String
+  owner     User     @relation("CircleOwner", fields: [ownerId], references: [id])
+  createdAt DateTime @default(now())
+
+  members CircleMember[]
+  places  Place[]
+
+  @@index([ownerId])
+}
+
+/// This is the consent boundary of the app. "invited" means nothing is
+/// visible yet; only the invitee moving a row to "active" turns sharing on.
+/// "left" is always set by the member on their own row, never by anyone else.
+model CircleMember {
+  id           String           @id @default(cuid())
+  circleId     String
+  circle       Circle           @relation(fields: [circleId], references: [id])
+  userId       String?
+  user         User?            @relation(fields: [userId], references: [id])
+  invitedEmail String
+  invitedBy    String
+  status       MembershipStatus @default(invited)
+  respondedAt  DateTime?
+  createdAt    DateTime         @default(now())
+
+  @@unique([circleId, invitedEmail])
+  @@index([userId])
+}
+
+model LocationPing {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  latitude     Float
+  longitude    Float
+  accuracy     Float
+  batteryLevel Int?
+  /// Raw navigator.userAgent from the reporting device — parsed for display
+  /// (OS/browser only) by lib/deviceInfo.ts, never used for fingerprinting.
+  userAgent    String?
+  timestamp    DateTime @default(now())
+
+  @@index([userId])
+  @@index([timestamp])
+}
+
+/// A shareable link a user creates. Visiting it never exposes anyone's
+/// location by itself — it only starts the consent flow in app/t/[linkId].
+model TrackingLink {
+  id        String   @id @default(cuid())
+  ownerId   String
+  owner     User     @relation("TrackingLinkOwner", fields: [ownerId], references: [id])
+  label     String?
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  grants TrackingGrant[]
+
+  @@index([ownerId])
+}
+
+/// The consent record created only after the target has an account, has
+/// been shown who's asking, and has granted browser location permission.
+/// One-directional by design: the watcher can see the target, never the
+/// reverse. Either side can set status to "revoked" on their own — the
+/// watcher choosing to stop watching, or the target choosing to stop being
+/// seen — but neither can revoke the other's side of that choice.
+model TrackingGrant {
+  id         String       @id @default(cuid())
+  linkId     String
+  link       TrackingLink @relation(fields: [linkId], references: [id])
+  watcherId  String
+  watcher    User         @relation("TrackingGrantWatcher", fields: [watcherId], references: [id])
+  targetId   String
+  target     User         @relation("TrackingGrantTarget", fields: [targetId], references: [id])
+  status     GrantStatus  @default(active)
+  createdAt  DateTime     @default(now())
+  revokedAt  DateTime?
+
+  @@unique([linkId, targetId])
+  @@index([watcherId])
+  @@index([targetId])
+}
+
+/// A named geofence (e.g. "Home"). Visible to every active circle member;
+/// not tied to watching one person in particular.
+model Place {
+  id           String   @id @default(cuid())
+  circleId     String
+  circle       Circle   @relation(fields: [circleId], references: [id])
+  name         String
+  latitude     Float
+  longitude    Float
+  radiusMeters Float    @default(150)
+  createdBy    String
+  createdAt    DateTime @default(now())
+
+  @@index([circleId])
+}
+
+/// A personal, per-user activity feed — powers the notifications table on
+/// the Dashboard. Best-effort: a logging failure never blocks the action
+/// that triggered it (see lib/activity.ts).
+model ActivityLog {
+  id        String         @id @default(cuid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id])
+  action    ActivityAction
+  message   String
+  createdAt DateTime       @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
