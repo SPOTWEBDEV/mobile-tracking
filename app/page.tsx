@@ -1,6 +1,6 @@
 import {
   LocateFixed, Play, Satellite, Route, Gauge, Map, FileDown, ShieldCheck,
-  CheckCircle2, XCircle, Puzzle, Globe, Spline, Zap, Layers, Smartphone, Lock, ArrowRight, type LucideIcon,
+  Spline, Zap, Smartphone, Lock, ArrowRight, type LucideIcon,
 } from "lucide-react";
 import Tracker from "@/components/Tracker";
 
@@ -23,18 +23,6 @@ const tint: Record<string, string> = {
   rose: "bg-rose-500/10 border-rose-500/20 text-rose-400",
 };
 
-const webPros = [
-  ["Direct Mobile Sensor Access", "Uses the real GPS chip in iOS and Android phones."],
-  ["Zero Installation Barrier", "Opens instantly in any modern browser via a shareable URL."],
-  ["On-The-Go Movement", "Built for walking, cycling, driving and field tracking."],
-  ["Easy Route Sharing", "Export files for analysis on any device."],
-];
-const extCons = [
-  ["Desktop Hardware Limits", "Most laptops lack GPS and fall back to inaccurate IP positioning."],
-  ["Installation Friction", "Needs a manual download and browser store install."],
-  ["Mobile Incompatibility", "Mobile browsers have limited or no extension support."],
-  ["Static Location", "Desktops stay put, so continuous tracking is pointless."],
-];
 const steps = [
   ["Grant GPS Permission", 'Click "Start Live Tracking" and allow your browser to use location sensors.', "bg-blue-600"],
   ["Begin Movement", "Walk, run or drive. Coordinates, speed and distance update continuously.", "bg-indigo-600"],
@@ -69,7 +57,7 @@ export default function Home() {
             </div>
           </a>
           <nav className="hidden items-center space-x-8 text-sm font-medium text-slate-300 md:flex">
-            {[["#hero", "Home"], ["#features", "Features"], ["#live-tracker", "Live App"], ["#comparison", "Web vs Extension"], ["#how-it-works", "How It Works"]].map(([h, l]) => (
+            {[["#hero", "Home"], ["#features", "Features"], ["#live-tracker", "Live App"], ["#how-it-works", "How It Works"]].map(([h, l]) => (
               <a key={h} href={h} className="transition hover:text-blue-400">{l}</a>
             ))}
           </nav>
@@ -99,9 +87,6 @@ export default function Home() {
               <div className="flex flex-col items-center justify-center gap-4 pt-2 sm:flex-row lg:justify-start">
                 <a href="#live-tracker" className="group flex w-full items-center justify-center space-x-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-7 py-3.5 text-sm font-bold text-white shadow-xl shadow-blue-600/30 sm:w-auto">
                   <span>Launch Live Tracker</span><ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </a>
-                <a href="#comparison" className="glass-card flex w-full items-center justify-center space-x-2 rounded-2xl px-7 py-3.5 text-sm font-semibold text-slate-200 sm:w-auto">
-                  <Layers className="h-4 w-4 text-slate-400" /><span>Web App vs Extension</span>
                 </a>
               </div>
               <div className="flex flex-wrap items-center justify-center gap-6 border-t border-slate-800/80 pt-6 text-xs font-medium text-slate-500 lg:justify-start">
@@ -169,34 +154,6 @@ export default function Home() {
       </section>
 
       <Tracker />
-
-      <section id="comparison" className="border-t border-slate-900 py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <Heading tag="Architectural Comparison" title="Why a Web App Beats an Extension" text="A responsive web app can use real phone GPS hardware; a desktop extension can't." />
-          <div className="grid gap-8 md:grid-cols-2">
-            {[
-              { title: "Web Application (PWA)", sub: "Cross-Platform Mobility", Icon: Globe, Mark: CheckCircle2, mark: "text-emerald-400", items: webPros, cls: "border-2 border-blue-500/40", rec: true },
-              { title: "Browser Extension", sub: "Desktop Browser Specific", Icon: Puzzle, Mark: XCircle, mark: "text-rose-500", items: extCons, cls: "border border-slate-800 text-slate-400" },
-            ].map(({ title, sub, Icon, Mark, mark, items, cls, rec }) => (
-              <div key={title} className={`glass-card relative overflow-hidden rounded-3xl p-8 ${cls}`}>
-                {rec && <div className="absolute right-0 top-0 rounded-bl-2xl bg-blue-600 px-4 py-1.5 text-[10px] font-extrabold uppercase text-white">Recommended</div>}
-                <div className="mb-6 flex items-center space-x-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-700 bg-slate-800"><Icon className="h-5 w-5" /></div>
-                  <div><h3 className="text-xl font-bold text-white">{title}</h3><p className="text-xs text-slate-500">{sub}</p></div>
-                </div>
-                <ul className="space-y-4 text-sm">
-                  {items.map(([t, d]) => (
-                    <li key={t} className="flex items-start space-x-3">
-                      <Mark className={`mt-0.5 h-5 w-5 shrink-0 ${mark}`} />
-                      <span><strong>{t}:</strong> {d}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       <section id="how-it-works" className="border-t border-slate-900 py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
